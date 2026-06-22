@@ -1,0 +1,1033 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>KwanzaFood Manager</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg2:#0d1b33;
+      --card:rgba(18,31,57,.82);
+      --card2:rgba(28,47,82,.9);
+      --primary:#35e0a1;
+      --primary-dark:#0bbd7c;
+      --purple:#8d5cff;
+      --orange:#ffae42;
+      --red:#ff5d73;
+      --text:#f5f8ff;
+      --muted:#9fb0d0;
+      --border:rgba(255,255,255,.09);
+      --shadow:0 18px 50px rgba(0,0,0,.35);
+    }
+
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(circle at top left, rgba(53,224,161,.16), transparent 30%),
+        radial-gradient(circle at top right, rgba(141,92,255,.18), transparent 32%),
+        linear-gradient(135deg,var(--bg),var(--bg2));
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .wrap{
+      max-width:1200px;
+      margin:auto;
+      padding:24px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:22px;
+      padding:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(15px);
+    }
+
+    .auth-box{
+      max-width:470px;
+      margin:8vh auto;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:12px;
+    }
+
+    .logo{
+      width:54px;
+      height:54px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      font-size:28px;
+      background:linear-gradient(135deg,var(--primary),var(--purple));
+      box-shadow:0 8px 25px rgba(53,224,161,.25);
+    }
+
+    h1{
+      font-size:27px;
+    }
+
+    h2{
+      margin-bottom:16px;
+      font-size:21px;
+    }
+
+    p{
+      color:var(--muted);
+      line-height:1.5;
+    }
+
+    .subtitle{
+      margin:10px 0 24px;
+    }
+
+    label{
+      display:block;
+      margin:13px 0 7px;
+      color:#dce6ff;
+      font-size:14px;
+      font-weight:bold;
+    }
+
+    input,select{
+      width:100%;
+      padding:14px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      outline:none;
+      color:var(--text);
+      background:rgba(4,12,27,.7);
+      font-size:15px;
+      transition:.25s;
+    }
+
+    input:focus,select:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(53,224,161,.13);
+    }
+
+    select option{
+      background:#14213d;
+      color:white;
+    }
+
+    button{
+      border:0;
+      width:100%;
+      padding:14px;
+      margin-top:12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:15px;
+      color:#06150f;
+      background:linear-gradient(135deg,var(--primary),#71f3c6);
+      transition:.25s;
+      box-shadow:0 8px 20px rgba(53,224,161,.18);
+    }
+
+    button:hover{
+      transform:translateY(-2px);
+      filter:brightness(1.08);
+    }
+
+    button:active{
+      transform:scale(.98);
+    }
+
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .btn-secondary{
+      background:linear-gradient(135deg,#52698f,#8397b8);
+      color:white;
+      box-shadow:none;
+    }
+
+    .btn-danger{
+      background:linear-gradient(135deg,#ff5d73,#ff8a98);
+      color:white;
+      box-shadow:none;
+    }
+
+    .btn-small{
+      width:auto;
+      padding:8px 12px;
+      margin:0;
+      font-size:12px;
+      border-radius:9px;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      margin-bottom:20px;
+    }
+
+    .restaurant-name{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .plan-badge{
+      display:inline-block;
+      margin-top:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:bold;
+      background:rgba(53,224,161,.15);
+      color:var(--primary);
+      border:1px solid rgba(53,224,161,.25);
+    }
+
+    .tabs{
+      display:flex;
+      gap:9px;
+      overflow-x:auto;
+      padding-bottom:10px;
+      margin-bottom:18px;
+    }
+
+    .tabs button{
+      width:auto;
+      white-space:nowrap;
+      margin:0;
+      padding:11px 16px;
+      color:#c7d5f1;
+      background:rgba(255,255,255,.07);
+      box-shadow:none;
+    }
+
+    .tabs button.active{
+      color:#05130e;
+      background:linear-gradient(135deg,var(--primary),#8df9d5);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:16px;
+    }
+
+    .stat{
+      padding:20px;
+      border-radius:18px;
+      background:linear-gradient(145deg,rgba(36,58,99,.8),rgba(15,25,49,.9));
+      border:1px solid var(--border);
+    }
+
+    .stat .icon{
+      font-size:28px;
+      margin-bottom:12px;
+    }
+
+    .stat h3{
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:8px;
+    }
+
+    .stat strong{
+      font-size:25px;
+      color:white;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:18px;
+    }
+
+    .list{
+      margin-top:18px;
+    }
+
+    .item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px;
+      margin-top:10px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      transition:.2s;
+    }
+
+    .item:hover{
+      transform:translateX(3px);
+      background:rgba(255,255,255,.07);
+    }
+
+    .item-main{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .item-main b{
+      font-size:15px;
+    }
+
+    .item-main span{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .empty{
+      text-align:center;
+      color:var(--muted);
+      padding:28px 10px;
+    }
+
+    .plans{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin:16px 0;
+    }
+
+    .plan-card{
+      cursor:pointer;
+      border:2px solid transparent;
+      padding:18px;
+      border-radius:18px;
+      background:linear-gradient(145deg,rgba(42,64,108,.8),rgba(17,29,55,.9));
+      transition:.25s;
+    }
+
+    .plan-card:hover{
+      transform:translateY(-5px);
+      border-color:rgba(53,224,161,.5);
+    }
+
+    .plan-card.selected{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(53,224,161,.13);
+    }
+
+    .plan-card h3{
+      margin-bottom:8px;
+    }
+
+    .price{
+      color:var(--primary);
+      font-size:22px;
+      font-weight:bold;
+      margin:10px 0;
+    }
+
+    .toast{
+      position:fixed;
+      right:20px;
+      bottom:20px;
+      max-width:340px;
+      padding:15px 18px;
+      border-radius:14px;
+      color:white;
+      background:#16233e;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      transform:translateY(120px);
+      opacity:0;
+      transition:.35s;
+      z-index:9999;
+    }
+
+    .toast.show{
+      transform:translateY(0);
+      opacity:1;
+    }
+
+    .toast.success{
+      border-color:rgba(53,224,161,.5);
+    }
+
+    .toast.error{
+      border-color:rgba(255,93,115,.65);
+    }
+
+    footer{
+      text-align:center;
+      color:#7f91b5;
+      padding:35px 15px 20px;
+      font-size:13px;
+    }
+
+    @media(max-width:760px){
+      .wrap{
+        padding:15px;
+      }
+
+      .stats,.grid,.plans{
+        grid-template-columns:1fr;
+      }
+
+      .topbar{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+      .topbar button{
+        width:100%;
+      }
+
+      h1{
+        font-size:22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="wrap">
+
+    <!-- LOGIN -->
+    <section id="auth">
+      <div class="card auth-box">
+        <div class="brand">
+          <div class="logo">🍽️</div>
+          <div>
+            <h1>KwanzaFood Manager</h1>
+            <p>Gestão inteligente para restaurantes.</p>
+          </div>
+        </div>
+
+        <p class="subtitle">
+          Controla clientes, produtos, pedidos e vendas num único lugar. Sem caos, sem papelada, sem drama de cozinha. 😎
+        </p>
+
+        <label>Email</label>
+        <input id="email" type="email" placeholder="exemplo@email.com">
+
+        <label>Senha</label>
+        <input id="password" type="password" placeholder="A tua senha">
+
+        <button id="loginBtn" onclick="login()">Entrar na conta</button>
+        <button class="btn-secondary" id="signupBtn" onclick="signup()">Criar nova conta</button>
+
+        <p id="msg" style="margin-top:15px"></p>
+      </div>
+    </section>
+
+    <!-- APP -->
+    <section id="app" class="hidden">
+
+      <div class="card topbar">
+        <div class="restaurant-name">
+          <div class="logo">🍴</div>
+          <div>
+            <h1 id="restTitle">KwanzaFood</h1>
+            <span class="plan-badge" id="planInfo">Plano: Sem plano</span>
+          </div>
+        </div>
+
+        <button class="btn-danger btn-small" onclick="logout()">Sair da conta</button>
+      </div>
+
+      <!-- CRIAR RESTAURANTE -->
+      <div id="setup" class="card hidden">
+        <h2>🚀 Vamos criar o teu restaurante</h2>
+        <p>Este será o teu painel principal de gestão.</p>
+
+        <label>Nome do restaurante</label>
+        <input id="restName" placeholder="Ex: Restaurante Tsubasa">
+
+        <button onclick="createRestaurant()">Criar restaurante</button>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="dash" class="hidden">
+
+        <div class="tabs">
+          <button class="active" onclick="tab('home',this)">📊 Resumo</button>
+          <button onclick="tab('clients',this)">👥 Clientes</button>
+          <button onclick="tab('products',this)">🍔 Produtos</button>
+          <button onclick="tab('orders',this)">🧾 Pedidos</button>
+          <button onclick="tab('plans',this)">💳 Planos</button>
+        </div>
+
+        <!-- HOME -->
+        <div id="home" class="page">
+          <div class="stats">
+            <div class="stat">
+              <div class="icon">👥</div>
+              <h3>Clientes registados</h3>
+              <strong id="cc">0</strong>
+            </div>
+
+            <div class="stat">
+              <div class="icon">🍔</div>
+              <h3>Produtos no menu</h3>
+              <strong id="cp">0</strong>
+            </div>
+
+            <div class="stat">
+              <div class="icon">💰</div>
+              <h3>Total de vendas</h3>
+              <strong id="sales">0 Kz</strong>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:18px">
+            <h2>📌 Centro de controlo</h2>
+            <p>
+              Aqui podes acompanhar o crescimento do teu restaurante. Cada pedido pago entra automaticamente no total de vendas.
+            </p>
+          </div>
+        </div>
+
+        <!-- CLIENTES -->
+        <div id="clients" class="page card hidden">
+          <h2>👥 Gestão de clientes</h2>
+
+          <div class="grid">
+            <div>
+              <label>Nome do cliente</label>
+              <input id="cn" placeholder="Nome completo">
+
+              <label>Telefone</label>
+              <input id="cphone" placeholder="Ex: 923 000 000">
+
+              <label>Morada</label>
+              <input id="caddress" placeholder="Ex: Benfica, Luanda">
+
+              <button onclick="addCustomer()">Guardar cliente</button>
+            </div>
+
+            <div>
+              <h3 style="margin-bottom:10px">Lista de clientes</h3>
+              <div id="clist" class="list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PRODUTOS -->
+        <div id="products" class="page card hidden">
+          <h2>🍔 Produtos e menu</h2>
+
+          <div class="grid">
+            <div>
+              <label>Nome do produto</label>
+              <input id="pn" placeholder="Ex: Hambúrguer Especial">
+
+              <label>Preço em Kwanza</label>
+              <input id="pp" type="number" min="1" placeholder="Ex: 3500">
+
+              <button onclick="addProduct()">Adicionar produto</button>
+            </div>
+
+            <div>
+              <h3 style="margin-bottom:10px">Produtos registados</h3>
+              <div id="plist" class="list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PEDIDOS -->
+        <div id="orders" class="page card hidden">
+          <h2>🧾 Registar pedido pago</h2>
+
+          <div class="grid">
+            <div>
+              <label>Produto</label>
+              <select id="op"></select>
+
+              <label>Quantidade</label>
+              <input id="oq" type="number" value="1" min="1">
+
+              <label>Cliente</label>
+              <select id="oc"></select>
+
+              <button onclick="addOrder()">Registar pedido pago</button>
+            </div>
+
+            <div>
+              <h3 style="margin-bottom:10px">Últimos pedidos</h3>
+              <div id="olist" class="list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PLANOS -->
+        <div id="plans" class="page card hidden">
+          <h2>💳 Escolhe o teu plano</h2>
+          <p>Seleciona o plano ideal para o teu restaurante.</p>
+
+          <div class="plans">
+            <div class="plan-card" onclick="choose('Normal',15000,this)">
+              <h3>Normal</h3>
+              <div class="price">15.000 Kz</div>
+              <p>Ideal para pequenos restaurantes.</p>
+            </div>
+
+            <div class="plan-card" onclick="choose('Bala',25000,this)">
+              <h3>⚡ Bala</h3>
+              <div class="price">25.000 Kz</div>
+              <p>Para negócios em crescimento.</p>
+            </div>
+
+            <div class="plan-card" onclick="choose('Boss',35000,this)">
+              <h3>👑 Boss</h3>
+              <div class="price">35.000 Kz</div>
+              <p>Para quem quer dominar o mercado.</p>
+            </div>
+          </div>
+
+          <label>Método de pagamento</label>
+          <select id="method">
+            <option>Multicaixa Express</option>
+            <option>Transferência Bancária</option>
+          </select>
+
+          <p style="margin-top:15px">
+            Pagamento via Multicaixa Express ou Transferência:
+            <b style="color:var(--primary)">923002202</b>
+          </p>
+
+          <button onclick="pay()">Enviar pedido de pagamento</button>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <footer>
+    © 2026 Nazael Diniz Alves Primo Giblin. Todos os direitos reservados.
+  </footer>
+
+  <script>
+    const sb = window.supabase.createClient(
+      "xmscemnursgrutxtlwot",
+      "sb_publishable_Ef3ouV6XusFmhq-DhopJbQ_tm1--Okl"
+    );
+
+    let r = null;
+    let ps = [];
+    let cs = [];
+    let selected = null;
+
+    const $ = x => document.getElementById(x);
+
+    const k = n => Number(n || 0).toLocaleString("pt-AO") + " Kz";
+
+    function escapeHTML(text){
+      return String(text || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+    }
+
+    function toast(message,type="success"){
+      const el = $("toast");
+      el.textContent = message;
+      el.className = "toast show " + type;
+
+      setTimeout(() => {
+        el.className = "toast";
+      }, 3500);
+    }
+
+    function setLoading(buttonId,loading,text){
+      const btn = $(buttonId);
+      if(!btn) return;
+
+      if(loading){
+        btn.dataset.old = btn.textContent;
+        btn.textContent = text || "A processar...";
+        btn.disabled = true;
+      }else{
+        btn.textContent = btn.dataset.old || btn.textContent;
+        btn.disabled = false;
+      }
+    }
+
+    async function me(){
+      return (await sb.auth.getUser()).data.user;
+    }
+
+    async function login(){
+      setLoading("loginBtn",true,"A entrar...");
+
+      const { error } = await sb.auth.signInWithPassword({
+        email:$("email").value.trim(),
+        password:$("password").value
+      });
+
+      setLoading("loginBtn",false);
+
+      if(error){
+        $("msg").textContent = error.message;
+        toast("Erro ao entrar. Verifica os teus dados.","error");
+        return;
+      }
+
+      toast("Bem-vindo ao KwanzaFood! 🍽️");
+      init();
+    }
+
+    async function signup(){
+      setLoading("signupBtn",true,"A criar conta...");
+
+      const { error } = await sb.auth.signUp({
+        email:$("email").value.trim(),
+        password:$("password").value
+      });
+
+      setLoading("signupBtn",false);
+
+      if(error){
+        $("msg").textContent = error.message;
+        toast("Não foi possível criar a conta.","error");
+        return;
+      }
+
+      $("msg").textContent = "Conta criada. Confirma o email caso seja solicitado.";
+      toast("Conta criada com sucesso! 🎉");
+    }
+
+    async function logout(){
+      await sb.auth.signOut();
+      location.reload();
+    }
+
+    async function init(){
+      const u = await me();
+
+      if(!u) return;
+
+      $("auth").classList.add("hidden");
+      $("app").classList.remove("hidden");
+
+      const x = await sb
+        .from("restaurants")
+        .select("*")
+        .eq("owner_id",u.id)
+        .maybeSingle();
+
+      r = x.data;
+
+      if(!r){
+        $("setup").classList.remove("hidden");
+        return;
+      }
+
+      $("setup").classList.add("hidden");
+      $("dash").classList.remove("hidden");
+      $("restTitle").textContent = "🍽️ " + r.name;
+      $("planInfo").textContent = "Plano: " + (r.plan || "Sem plano");
+
+      refresh();
+    }
+
+    async function createRestaurant(){
+      const u = await me();
+      const name = $("restName").value.trim();
+
+      if(!name){
+        toast("Escreve o nome do restaurante.","error");
+        return;
+      }
+
+      const { error } = await sb.from("restaurants").insert({
+        owner_id:u.id,
+        name,
+        plan:"Sem plano"
+      });
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      toast("Restaurante criado com sucesso! 🚀");
+      init();
+    }
+
+    async function refresh(){
+      if(!r) return;
+
+      const [a,b,c] = await Promise.all([
+        sb.from("customers").select("*").eq("restaurant_id",r.id),
+        sb.from("products").select("*").eq("restaurant_id",r.id),
+        sb.from("orders")
+          .select("*")
+          .eq("restaurant_id",r.id)
+          .order("created_at",{ascending:false})
+      ]);
+
+      cs = a.data || [];
+      ps = b.data || [];
+      const os = c.data || [];
+
+      $("cc").textContent = cs.length;
+      $("cp").textContent = ps.length;
+
+      $("sales").textContent = k(
+        os.reduce((sum,x) => sum + Number(x.total || 0),0)
+      );
+
+      $("clist").innerHTML = cs.length
+        ? cs.map(x => `
+          <div class="item">
+            <div class="item-main">
+              <b>${escapeHTML(x.name)}</b>
+              <span>${escapeHTML(x.phone || "Sem telefone")} · ${escapeHTML(x.address || "Sem morada")}</span>
+            </div>
+            <button class="btn-danger btn-small" onclick="deleteCustomer('${x.id}')">Apagar</button>
+          </div>
+        `).join("")
+        : `<div class="empty">Ainda não tens clientes registados. 👥</div>`;
+
+      $("plist").innerHTML = ps.length
+        ? ps.map(x => `
+          <div class="item">
+            <div class="item-main">
+              <b>${escapeHTML(x.name)}</b>
+              <span>${k(x.price)}</span>
+            </div>
+            <button class="btn-danger btn-small" onclick="deleteProduct('${x.id}')">Apagar</button>
+          </div>
+        `).join("")
+        : `<div class="empty">O teu menu ainda está vazio. 🍔</div>`;
+
+      $("olist").innerHTML = os.length
+        ? os.map(x => `
+          <div class="item">
+            <div class="item-main">
+              <b>${escapeHTML(x.product_name)}</b>
+              <span>${x.quantity} unidade(s) · ${k(x.total)} · ${escapeHTML(x.status || "Pago")}</span>
+            </div>
+            <button class="btn-danger btn-small" onclick="deleteOrder('${x.id}')">Apagar</button>
+          </div>
+        `).join("")
+        : `<div class="empty">Ainda não existem pedidos pagos. 🧾</div>`;
+
+      $("op").innerHTML =
+        '<option value="">Seleciona um produto</option>' +
+        ps.map(x => `
+          <option value="${x.id}">
+            ${escapeHTML(x.name)} - ${k(x.price)}
+          </option>
+        `).join("");
+
+      $("oc").innerHTML =
+        '<option value="">Cliente opcional</option>' +
+        cs.map(x => `
+          <option value="${x.id}">
+            ${escapeHTML(x.name)}
+          </option>
+        `).join("");
+    }
+
+    async function addCustomer(){
+      const name = $("cn").value.trim();
+
+      if(!name){
+        toast("O nome do cliente é obrigatório.","error");
+        return;
+      }
+
+      const { error } = await sb.from("customers").insert({
+        restaurant_id:r.id,
+        name,
+        phone:$("cphone").value.trim(),
+        address:$("caddress").value.trim()
+      });
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      $("cn").value = "";
+      $("cphone").value = "";
+      $("caddress").value = "";
+
+      toast("Cliente guardado com sucesso! 👥");
+      refresh();
+    }
+
+    async function addProduct(){
+      const name = $("pn").value.trim();
+      const price = Number($("pp").value);
+
+      if(!name || !price || price <= 0){
+        toast("Preenche o nome e preço do produto.","error");
+        return;
+      }
+
+      const { error } = await sb.from("products").insert({
+        restaurant_id:r.id,
+        name,
+        price
+      });
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      $("pn").value = "";
+      $("pp").value = "";
+
+      toast("Produto adicionado ao menu! 🍔");
+      refresh();
+    }
+
+    async function addOrder(){
+      const p = ps.find(x => x.id === $("op").value);
+      const q = Number($("oq").value);
+
+      if(!p || q < 1){
+        toast("Escolhe um produto e uma quantidade válida.","error");
+        return;
+      }
+
+      const { error } = await sb.from("orders").insert({
+        restaurant_id:r.id,
+        customer_id:$("oc").value || null,
+        product_name:p.name,
+        quantity:q,
+        total:Number(p.price) * q,
+        status:"Pago"
+      });
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      $("oq").value = 1;
+      $("op").value = "";
+      $("oc").value = "";
+
+      toast("Pedido registado! Dinheiro entrou no cofre virtual. 💰");
+      refresh();
+    }
+
+    async function deleteCustomer(id){
+      if(!confirm("Queres apagar este cliente?")) return;
+
+      const { error } = await sb.from("customers").delete().eq("id",id);
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      toast("Cliente apagado.");
+      refresh();
+    }
+
+    async function deleteProduct(id){
+      if(!confirm("Queres apagar este produto?")) return;
+
+      const { error } = await sb.from("products").delete().eq("id",id);
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      toast("Produto removido do menu.");
+      refresh();
+    }
+
+    async function deleteOrder(id){
+      if(!confirm("Queres apagar este pedido?")) return;
+
+      const { error } = await sb.from("orders").delete().eq("id",id);
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      toast("Pedido apagado.");
+      refresh();
+    }
+
+    function choose(plan,amount,element){
+      selected = {plan,amount};
+
+      document.querySelectorAll(".plan-card").forEach(card => {
+        card.classList.remove("selected");
+      });
+
+      element.classList.add("selected");
+
+      toast(`Plano ${plan} selecionado! ⚡`);
+    }
+
+    async function pay(){
+      if(!selected){
+        toast("Escolhe um plano primeiro.","error");
+        return;
+      }
+
+      const { error } = await sb.from("subscription_payments").insert({
+        restaurant_id:r.id,
+        plan:selected.plan,
+        amount:selected.amount,
+        payment_method:$("method").value
+      });
+
+      if(error){
+        toast(error.message,"error");
+        return;
+      }
+
+      toast("Pedido enviado! Faz o pagamento para 923002202. 💳");
+    }
+
+    function tab(id,button){
+      document.querySelectorAll(".page").forEach(x => x.classList.add("hidden"));
+      document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("active"));
+
+      $(id).classList.remove("hidden");
+      button.classList.add("active");
+    }
+
+    sb.auth.onAuthStateChange((event,session) => {
+      if(session){
+        init();
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
